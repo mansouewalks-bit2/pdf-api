@@ -1,0 +1,10 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+playwright==1.49.1
+pypdf==5.1.0
+Pillow==11.1.0
+aiofiles==24.1.0
+reportlab==4.2.5
+aiosqlite==0.20.0
+pydantic==2.10.4

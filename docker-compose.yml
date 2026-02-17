@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  pdf-api:
+    build: .
+    container_name: editpdfree-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - pdf-data:/app/data
+    environment:
+      - PDF_API_DB=/app/data/pdf_api.db
+      - PORT=8000
+      - ENV=production
+    mem_limit: 1g
+    cpus: 2
+
+volumes:
+  pdf-data:
