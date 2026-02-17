@@ -1,0 +1,741 @@
+openapi: 3.0.3
+info:
+  title: EditPDFree PDF API
+  description: |
+    Professional PDF manipulation API for converting HTML/URLs to PDF, merging, compressing, splitting, watermarking, and password-protecting documents.
+
+    ## Authentication
+    All endpoints require an API key passed via the `X-API-Key` header.
+
+    ## Rate Limits
+    - Basic: 50 requests/month
+    - Pro: 500 requests/month
+    - Ultra: 5,000 requests/month
+    - Mega: 20,000 requests/month
+
+    ## Features
+    - HTML to PDF conversion with custom headers/footers
+    - URL to PDF capture with full rendering
+    - Merge multiple PDFs into one
+    - Compress PDFs with quality control
+    - Split PDFs by page ranges
+    - Add text watermarks with customization
+    - Password protection with encryption
+
+  version: 1.0.0
+  contact:
+    email: support@editpdfree.com
+    url: https://www.editpdfree.com
+  termsOfService: https://www.editpdfree.com/terms
+  license:
+    name: Proprietary
+    url: https://www.editpdfree.com/terms
+
+servers:
+  - url: https://api.editpdfree.com
+    description: Production server
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: PDF Generation
+    description: Convert HTML or URLs to PDF documents
+  - name: PDF Manipulation
+    description: Merge, compress, split, watermark, and protect PDF files
+  - name: Usage
+    description: Check API usage and quota
+
+paths:
+  /api/v1/html-to-pdf:
+    post:
+      tags:
+        - PDF Generation
+      summary: Convert HTML to PDF
+      description: |
+        Convert HTML content to a PDF document with full CSS support and customization options.
+
+        **Features:**
+        - Full CSS3 and JavaScript rendering
+        - Custom page size (A4, Letter, Legal, or custom dimensions)
+        - Adjustable margins
+        - Portrait or landscape orientation
+        - Custom headers and footers with HTML support
+        - Background graphics and colors
+        - Scale content to fit
+
+        **Response:** Binary PDF file
+      operationId: htmlToPdf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - html
+              properties:
+                html:
+                  type: string
+                  description: HTML content to convert to PDF
+                  example: "<html><body><h1>Hello World</h1><p>This is a test PDF.</p></body></html>"
+                options:
+                  type: object
+                  description: PDF generation options
+                  properties:
+                    format:
+                      type: string
+                      enum: [A4, Letter, Legal, A3, A5, Tabloid]
+                      default: A4
+                      description: Page format
+                    margin:
+                      type: object
+                      description: Page margins
+                      properties:
+                        top:
+                          type: string
+                          default: "1cm"
+                          example: "1cm"
+                        right:
+                          type: string
+                          default: "1cm"
+                          example: "1cm"
+                        bottom:
+                          type: string
+                          default: "1cm"
+                          example: "1cm"
+                        left:
+                          type: string
+                          default: "1cm"
+                          example: "1cm"
+                    landscape:
+                      type: boolean
+                      default: false
+                      description: Use landscape orientation
+                    header_html:
+                      type: string
+                      description: HTML content for page header
+                      example: "<div style='text-align:center;font-size:10px;'>Page Header</div>"
+                    footer_html:
+                      type: string
+                      description: HTML content for page footer (use {page} and {total} for page numbers)
+                      example: "<div style='text-align:center;font-size:10px;'>Page {page} of {total}</div>"
+                    print_background:
+                      type: boolean
+                      default: true
+                      description: Print background graphics and colors
+                    scale:
+                      type: number
+                      minimum: 0.1
+                      maximum: 2
+                      default: 1
+                      description: Scale of the webpage rendering
+      responses:
+        '200':
+          description: PDF generated successfully
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/url-to-pdf:
+    post:
+      tags:
+        - PDF Generation
+      summary: Convert URL to PDF
+      description: |
+        Capture any webpage as a PDF with complete rendering fidelity.
+
+        **Features:**
+        - Full page rendering with JavaScript execution
+        - Custom page size and margins
+        - Portrait or landscape orientation
+        - Custom headers and footers
+        - Background graphics and colors
+        - Adjustable scale
+
+        **Response:** Binary PDF file
+      operationId: urlToPdf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: URL of the webpage to convert
+                  example: "https://www.example.com"
+                options:
+                  type: object
+                  description: PDF generation options (same as html-to-pdf)
+                  properties:
+                    format:
+                      type: string
+                      enum: [A4, Letter, Legal, A3, A5, Tabloid]
+                      default: A4
+                    margin:
+                      type: object
+                      properties:
+                        top:
+                          type: string
+                          default: "1cm"
+                        right:
+                          type: string
+                          default: "1cm"
+                        bottom:
+                          type: string
+                          default: "1cm"
+                        left:
+                          type: string
+                          default: "1cm"
+                    landscape:
+                      type: boolean
+                      default: false
+                    header_html:
+                      type: string
+                    footer_html:
+                      type: string
+                    print_background:
+                      type: boolean
+                      default: true
+                    scale:
+                      type: number
+                      minimum: 0.1
+                      maximum: 2
+                      default: 1
+      responses:
+        '200':
+          description: PDF generated successfully
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid URL or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/merge:
+    post:
+      tags:
+        - PDF Manipulation
+      summary: Merge PDF files
+      description: |
+        Combine multiple PDF files into a single document. Files are merged in the order they are provided.
+
+        **Limits:**
+        - Maximum 20 files per request
+        - Maximum 50MB total size
+
+        **Response:** Binary merged PDF file
+      operationId: mergePdfs
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - files
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: PDF files to merge (2-20 files)
+                  minItems: 2
+                  maxItems: 20
+      responses:
+        '200':
+          description: PDFs merged successfully
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid files or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/compress:
+    post:
+      tags:
+        - PDF Manipulation
+      summary: Compress PDF file
+      description: |
+        Reduce PDF file size with quality control. Choose compression level based on your needs.
+
+        **Compression Levels:**
+        - **Low**: Minimal compression, highest quality (10-30% reduction)
+        - **Medium**: Balanced compression and quality (30-50% reduction)
+        - **High**: Maximum compression, lower quality (50-70% reduction)
+
+        **Limits:**
+        - Maximum file size: 50MB
+
+        **Response:** Binary compressed PDF file
+      operationId: compressPdf
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF file to compress
+                quality:
+                  type: string
+                  enum: [low, medium, high]
+                  default: medium
+                  description: Compression quality level
+      responses:
+        '200':
+          description: PDF compressed successfully
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid file or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/split:
+    post:
+      tags:
+        - PDF Manipulation
+      summary: Split PDF file
+      description: |
+        Extract specific pages or page ranges from a PDF document.
+
+        **Page Syntax:**
+        - Single pages: "1,3,5"
+        - Ranges: "1-3,5-7"
+        - Mixed: "1,3-5,7,9-12"
+
+        **Examples:**
+        - "1-3": Extract pages 1, 2, and 3
+        - "1,5,10": Extract pages 1, 5, and 10
+        - "1-3,5,7-9": Extract pages 1, 2, 3, 5, 7, 8, and 9
+
+        **Limits:**
+        - Maximum file size: 50MB
+
+        **Response:** Binary PDF with extracted pages
+      operationId: splitPdf
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - pages
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF file to split
+                pages:
+                  type: string
+                  description: Pages to extract (e.g., "1-3,5,7-9")
+                  example: "1-3,5"
+      responses:
+        '200':
+          description: PDF split successfully
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid file or page range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/watermark:
+    post:
+      tags:
+        - PDF Manipulation
+      summary: Add watermark to PDF
+      description: |
+        Add a text watermark to all pages of a PDF document with full customization.
+
+        **Features:**
+        - Custom watermark text
+        - Adjustable opacity (0.0 - 1.0)
+        - Multiple position options
+        - Font size control (8-200)
+
+        **Positions:**
+        - center: Center of page (default)
+        - top-left: Top left corner
+        - top-right: Top right corner
+        - bottom-left: Bottom left corner
+        - bottom-right: Bottom right corner
+
+        **Limits:**
+        - Maximum file size: 50MB
+
+        **Response:** Binary PDF with watermark
+      operationId: watermarkPdf
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - text
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF file to watermark
+                text:
+                  type: string
+                  description: Watermark text
+                  example: "CONFIDENTIAL"
+                opacity:
+                  type: number
+                  minimum: 0.0
+                  maximum: 1.0
+                  default: 0.3
+                  description: Watermark opacity (0.0 = transparent, 1.0 = opaque)
+                position:
+                  type: string
+                  enum: [center, top-left, top-right, bottom-left, bottom-right]
+                  default: center
+                  description: Watermark position on page
+                font_size:
+                  type: integer
+                  minimum: 8
+                  maximum: 200
+                  default: 60
+                  description: Font size in points
+      responses:
+        '200':
+          description: Watermark added successfully
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid file or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/protect:
+    post:
+      tags:
+        - PDF Manipulation
+      summary: Password-protect PDF
+      description: |
+        Add password protection to a PDF document with encryption.
+
+        **Features:**
+        - User password (required to open PDF)
+        - Owner password (required to modify restrictions)
+        - 128-bit encryption
+        - Restrict printing and copying
+
+        **Passwords:**
+        - User password: Required to open and view the PDF
+        - Owner password (optional): Required to change permissions
+
+        **Limits:**
+        - Maximum file size: 50MB
+
+        **Response:** Binary encrypted PDF file
+      operationId: protectPdf
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - password
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF file to protect
+                password:
+                  type: string
+                  description: User password (required to open PDF)
+                  example: "mySecretPassword123"
+                owner_password:
+                  type: string
+                  description: Owner password (optional, for permission changes)
+                  example: "ownerPassword456"
+      responses:
+        '200':
+          description: PDF protected successfully
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid file or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/usage:
+    get:
+      tags:
+        - Usage
+      summary: Get API usage statistics
+      description: |
+        Retrieve current usage statistics and quota information for your API key.
+
+        **Response includes:**
+        - Total requests made this month
+        - Quota limit for your plan
+        - Requests remaining
+        - Plan name
+        - Reset date (when quota resets)
+      operationId: getUsage
+      responses:
+        '200':
+          description: Usage statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plan:
+                    type: string
+                    description: Current plan name
+                    example: "Pro"
+                  quota:
+                    type: integer
+                    description: Monthly quota limit
+                    example: 500
+                  used:
+                    type: integer
+                    description: Requests used this month
+                    example: 127
+                  remaining:
+                    type: integer
+                    description: Requests remaining
+                    example: 373
+                  reset_date:
+                    type: string
+                    format: date
+                    description: Date when quota resets
+                    example: "2026-03-01"
+        '401':
+          description: Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication. Get your key from https://www.editpdfree.com/api
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid API key"
+        detail:
+          type: string
+          description: Detailed error information
+          example: "The provided API key is invalid or has been revoked"
+        code:
+          type: string
+          description: Error code
+          example: "INVALID_API_KEY"
+      required:
+        - error
+
+x-readme:
+  samples-languages:
+    - curl
+    - javascript
+    - python
+    - php
+    - ruby
+    - java
+    - csharp
+    - go
