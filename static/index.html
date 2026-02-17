@@ -6,6 +6,7 @@
     <title>EditPDFree API - PDF Processing Made Simple</title>
     <meta name="description" content="Powerful PDF API for developers. Convert HTML to PDF, merge, compress, split, watermark and protect PDFs. Free tier available.">
     <link rel="canonical" href="https://api.editpdfree.com/">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8795551727779005" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -363,6 +364,7 @@
 <div class="auth-modal" id="auth-modal">
     <div class="auth-modal-content">
         <div id="auth-login-form">
+            <div class="auth-notice" id="auth-notice" style="display:none;background:#dbeafe;color:#1d4ed8;padding:.7rem 1rem;border-radius:8px;font-size:.9rem;font-weight:600;margin-bottom:1rem;text-align:center;"></div>
             <h3>Log in to your account</h3>
             <p>Access your API dashboard and manage your key.</p>
             <div class="auth-error" id="auth-error"></div>
@@ -1251,12 +1253,18 @@ auth.onAuthStateChanged(async function(user) {
 function showAuthModal(mode) {
     document.getElementById('auth-modal').classList.add('active');
     switchAuthMode(mode || 'login');
+    // Hide notice unless set by subscribePlan
+    if (!window._pendingSubscribe) {
+        document.getElementById('auth-notice').style.display = 'none';
+    }
 }
 
 function closeAuthModal() {
     document.getElementById('auth-modal').classList.remove('active');
     document.getElementById('auth-error').style.display = 'none';
     document.getElementById('auth-signup-error').style.display = 'none';
+    document.getElementById('auth-notice').style.display = 'none';
+    window._pendingSubscribe = null;
 }
 
 function switchAuthMode(mode) {
@@ -1312,11 +1320,23 @@ async function signupWithEmail() {
 async function loginWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
     try {
+        // Try popup first, fall back to redirect
         await auth.signInWithPopup(provider);
     } catch (e) {
-        const errorEl = document.getElementById('auth-error');
-        errorEl.textContent = e.message.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim();
-        errorEl.style.display = 'block';
+        if (e.code === 'auth/popup-blocked' || e.code === 'auth/unauthorized-domain' || e.code === 'auth/popup-closed-by-user') {
+            // Fallback to redirect
+            try {
+                await auth.signInWithRedirect(provider);
+            } catch (e2) {
+                const errorEl = document.getElementById('auth-error');
+                errorEl.textContent = e2.message.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim();
+                errorEl.style.display = 'block';
+            }
+        } else {
+            const errorEl = document.getElementById('auth-error');
+            errorEl.textContent = e.message.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim();
+            errorEl.style.display = 'block';
+        }
     }
 }
 
@@ -1464,6 +1484,10 @@ async function manageDashSubscription() {
 function subscribePlan(plan, stripeUrl) {
     if (!currentUser) {
         showAuthModal('login');
+        // Show notice explaining why login is needed
+        const notice = document.getElementById('auth-notice');
+        notice.textContent = 'Please log in or create an account to subscribe to the ' + plan.charAt(0).toUpperCase() + plan.slice(1) + ' plan.';
+        notice.style.display = 'block';
         // Store intent to redirect after login
         window._pendingSubscribe = stripeUrl;
         return;
