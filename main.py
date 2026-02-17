@@ -307,6 +307,31 @@ async def api_generate_key(
     }
 
 
+# ─── Stripe Subscription Management ──────────────────────────────────────────────
+
+@app.post("/api/v1/manage-subscription")
+async def manage_subscription(request: Request):
+    """Create a Stripe Customer Portal session for subscription management."""
+    body = await request.json()
+    email = body.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    try:
+        # Find the customer by email
+        customers = stripe.Customer.list(email=email, limit=1)
+        if not customers.data:
+            raise HTTPException(status_code=404, detail="No subscription found for this email")
+
+        session = stripe.billing_portal.Session.create(
+            customer=customers.data[0].id,
+            return_url="https://api.editpdfree.com",
+        )
+        return {"url": session.url}
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ─── Stripe Webhook ──────────────────────────────────────────────────────────────
 
 STRIPE_PRICE_TO_PLAN = {

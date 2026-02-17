@@ -9,7 +9,7 @@ from models import PLAN_LIMITS
 class APIKeyMiddleware(BaseHTTPMiddleware):
     """Extract and validate API key from X-API-Key header."""
 
-    EXEMPT_PATHS = {"/", "/docs", "/openapi.json", "/redoc", "/health", "/api/v1/generate-key", "/stripe/webhook"}
+    EXEMPT_PATHS = {"/", "/docs", "/openapi.json", "/redoc", "/health", "/api/v1/generate-key", "/stripe/webhook", "/api/v1/manage-subscription"}
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path

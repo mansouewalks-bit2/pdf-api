@@ -481,7 +481,24 @@
             <a href="https://buy.stripe.com/28E6oI9SUgJy0dW6iA8bS05" class="btn btn-outline">Subscribe</a>
         </div>
     </div>
+    <div style="text-align:center;margin-top:2rem;">
+        <p style="color:var(--text-muted);font-size:.9rem;">Already a subscriber? <a href="#" onclick="manageSubscription()" style="color:var(--primary);font-weight:600;">Manage your subscription</a></p>
+    </div>
 </section>
+
+<!-- ── Manage Subscription Modal ──────────────────────────────────────── -->
+<div id="manage-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:var(--radius);padding:2rem;max-width:400px;width:90%;box-shadow:var(--shadow-lg);">
+        <h3 style="margin-bottom:1rem;">Manage Subscription</h3>
+        <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:1rem;">Enter the email you used to subscribe:</p>
+        <input type="email" id="manage-email" placeholder="your@email.com" style="width:100%;padding:.6rem .8rem;border:1px solid var(--border);border-radius:8px;font-size:.9rem;margin-bottom:1rem;">
+        <div style="display:flex;gap:.5rem;">
+            <button class="btn btn-primary" onclick="openPortal()" style="flex:1;">Go to Portal</button>
+            <button class="btn btn-outline" onclick="document.getElementById('manage-modal').style.display='none'" style="flex:1;">Cancel</button>
+        </div>
+        <p id="manage-error" style="display:none;margin-top:.8rem;color:#dc2626;font-size:.85rem;"></p>
+    </div>
+</div>
 
 <!-- ── Code Examples ────────────────────────────────────────────────────── -->
 <section class="section" id="examples" style="background:#f1f5f9;max-width:100%;padding-left:2rem;padding-right:2rem;">
@@ -943,6 +960,35 @@ function copyTab(lang) {
         btn.textContent = "Copied!";
         setTimeout(() => btn.textContent = "Copy", 2000);
     });
+}
+
+function manageSubscription() {
+    document.getElementById('manage-modal').style.display = 'flex';
+    document.getElementById('manage-email').focus();
+}
+
+async function openPortal() {
+    const email = document.getElementById('manage-email').value.trim();
+    const errorEl = document.getElementById('manage-error');
+    if (!email) { errorEl.textContent = 'Please enter your email.'; errorEl.style.display = 'block'; return; }
+    errorEl.style.display = 'none';
+
+    try {
+        const resp = await fetch('/api/v1/manage-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        if (!resp.ok) {
+            const err = await resp.json();
+            throw new Error(err.detail || 'No subscription found');
+        }
+        const data = await resp.json();
+        window.location.href = data.url;
+    } catch (e) {
+        errorEl.textContent = e.message;
+        errorEl.style.display = 'block';
+    }
 }
 
 function copyHero() {
