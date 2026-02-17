@@ -7,6 +7,8 @@
     <meta name="description" content="Powerful PDF API for developers. Convert HTML to PDF, merge, compress, split, watermark and protect PDFs. Free tier available.">
     <link rel="canonical" href="https://api.editpdfree.com/">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8795551727779005" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -247,6 +249,58 @@
         footer a { color: #60a5fa; text-decoration: none; }
         footer a:hover { color: #93c5fd; }
 
+        /* ── Auth & Dashboard ─────────────────────────────── */
+        .auth-buttons { display: flex; gap: .5rem; align-items: center; }
+        .btn-login { background: transparent; color: var(--primary); border: 1px solid var(--primary); padding: .4rem 1rem; border-radius: 8px; font-weight: 600; font-size: .85rem; cursor: pointer; transition: all .2s; }
+        .btn-login:hover { background: var(--primary-light); }
+        .btn-signup { background: var(--primary); color: #fff; border: none; padding: .4rem 1rem; border-radius: 8px; font-weight: 600; font-size: .85rem; cursor: pointer; transition: all .2s; }
+        .btn-signup:hover { background: var(--primary-dark); }
+        .user-menu { display: flex; align-items: center; gap: .8rem; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; }
+        .user-email { font-size: .85rem; color: var(--text-muted); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .btn-dashboard-link { color: var(--primary); font-weight: 600; font-size: .85rem; cursor: pointer; background: none; border: none; text-decoration: underline; }
+        .btn-logout { background: none; border: 1px solid var(--border); color: var(--text-muted); padding: .3rem .8rem; border-radius: 6px; font-size: .8rem; cursor: pointer; }
+        .btn-logout:hover { border-color: #dc2626; color: #dc2626; }
+
+        /* Auth Modal */
+        .auth-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.5); z-index: 200; align-items: center; justify-content: center; }
+        .auth-modal.active { display: flex; }
+        .auth-modal-content { background: #fff; border-radius: var(--radius); padding: 2rem; max-width: 420px; width: 90%; box-shadow: var(--shadow-lg); }
+        .auth-modal-content h3 { font-size: 1.3rem; margin-bottom: .5rem; }
+        .auth-modal-content p { color: var(--text-muted); font-size: .9rem; margin-bottom: 1.5rem; }
+        .auth-input { width: 100%; padding: .7rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: .95rem; margin-bottom: .8rem; font-family: inherit; }
+        .auth-input:focus { outline: none; border-color: var(--primary); }
+        .auth-error { color: #dc2626; font-size: .85rem; margin-bottom: .8rem; display: none; }
+        .auth-switch { text-align: center; margin-top: 1rem; font-size: .9rem; color: var(--text-muted); }
+        .auth-switch a { color: var(--primary); font-weight: 600; cursor: pointer; text-decoration: none; }
+        .auth-divider { text-align: center; color: var(--text-muted); font-size: .85rem; margin: 1rem 0; position: relative; }
+        .auth-divider::before, .auth-divider::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: var(--border); }
+        .auth-divider::before { left: 0; }
+        .auth-divider::after { right: 0; }
+        .btn-google { width: 100%; padding: .7rem; border: 1px solid var(--border); border-radius: 8px; background: #fff; cursor: pointer; font-size: .9rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: .5rem; transition: all .2s; }
+        .btn-google:hover { background: #f8fafc; border-color: var(--text-muted); }
+
+        /* Dashboard Section */
+        .dashboard-section { display: none; }
+        .dashboard-section.active { display: block; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; max-width: 900px; margin: 0 auto; }
+        .dash-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+        .dash-card h4 { font-size: .85rem; color: var(--text-muted); font-weight: 600; margin-bottom: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+        .dash-value { font-size: 1.8rem; font-weight: 800; color: var(--text); }
+        .dash-sub { font-size: .85rem; color: var(--text-muted); margin-top: .3rem; }
+        .dash-key-box { display: flex; align-items: center; gap: .5rem; background: #f1f5f9; padding: .6rem .8rem; border-radius: 8px; font-family: 'Courier New', monospace; font-size: .9rem; word-break: break-all; }
+        .dash-key-box button { flex-shrink: 0; }
+        .usage-bar { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; margin-top: .8rem; overflow: hidden; }
+        .usage-bar-fill { height: 100%; background: var(--primary); border-radius: 4px; transition: width .3s; }
+        .usage-bar-fill.warning { background: var(--accent); }
+        .usage-bar-fill.danger { background: #dc2626; }
+        .plan-badge { display: inline-block; padding: .2rem .7rem; border-radius: 99px; font-size: .8rem; font-weight: 700; text-transform: uppercase; }
+        .plan-free { background: #f1f5f9; color: var(--text-muted); }
+        .plan-starter { background: #dbeafe; color: #2563eb; }
+        .plan-pro { background: #f3e8ff; color: #9333ea; }
+        .plan-business { background: #dcfce7; color: #16a34a; }
+        .dash-actions { display: flex; gap: .8rem; margin-top: 1rem; flex-wrap: wrap; }
+
         /* ── Responsive ───────────────────────────────────── */
         @media (max-width: 768px) {
             .hero h1 { font-size: 2rem; }
@@ -270,6 +324,17 @@
             <a href="#docs" class="hide-mobile">Docs</a>
             <a href="#faq" class="hide-mobile">FAQ</a>
             <a href="https://www.editpdfree.com" target="_blank" class="btn btn-outline btn-sm">EditPDFree.com</a>
+            <!-- Auth buttons (shown when logged out) -->
+            <div class="auth-buttons" id="auth-buttons">
+                <button class="btn-login" onclick="showAuthModal('login')">Log in</button>
+                <button class="btn-signup" onclick="showAuthModal('signup')">Sign up</button>
+            </div>
+            <!-- User menu (shown when logged in) -->
+            <div class="user-menu" id="user-menu" style="display:none;">
+                <button class="btn-dashboard-link" onclick="scrollToDashboard()">Dashboard</button>
+                <div class="user-avatar" id="user-avatar">U</div>
+                <button class="btn-logout" onclick="logoutUser()">Log out</button>
+            </div>
         </div>
     </div>
 </nav>
@@ -291,6 +356,94 @@
   -H <span class="str">"X-API-Key: YOUR_KEY"</span> \
   -d <span class="str">'{"html": "&lt;h1&gt;Hello World&lt;/h1&gt;", "options": {"format": "A4"}}'</span> \
   -o output.pdf</pre>
+    </div>
+</section>
+
+<!-- ── Auth Modal ──────────────────────────────────────────────────────── -->
+<div class="auth-modal" id="auth-modal">
+    <div class="auth-modal-content">
+        <div id="auth-login-form">
+            <h3>Log in to your account</h3>
+            <p>Access your API dashboard and manage your key.</p>
+            <div class="auth-error" id="auth-error"></div>
+            <input type="email" class="auth-input" id="auth-email" placeholder="Email address">
+            <input type="password" class="auth-input" id="auth-password" placeholder="Password">
+            <div style="display:flex;gap:.5rem;">
+                <button class="btn btn-primary" style="flex:1;" onclick="loginWithEmail()">Log in</button>
+                <button class="btn btn-outline" style="flex:0 0 auto;" onclick="closeAuthModal()">Cancel</button>
+            </div>
+            <div class="auth-divider">or</div>
+            <button class="btn-google" onclick="loginWithGoogle()">
+                <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                Continue with Google
+            </button>
+            <div class="auth-switch">Don't have an account? <a onclick="switchAuthMode('signup')">Sign up</a></div>
+        </div>
+        <div id="auth-signup-form" style="display:none;">
+            <h3>Create your account</h3>
+            <p>Get your API key and start processing PDFs.</p>
+            <div class="auth-error" id="auth-signup-error"></div>
+            <input type="email" class="auth-input" id="signup-email" placeholder="Email address">
+            <input type="password" class="auth-input" id="signup-password" placeholder="Password (min 6 characters)">
+            <div style="display:flex;gap:.5rem;">
+                <button class="btn btn-primary" style="flex:1;" onclick="signupWithEmail()">Create account</button>
+                <button class="btn btn-outline" style="flex:0 0 auto;" onclick="closeAuthModal()">Cancel</button>
+            </div>
+            <div class="auth-divider">or</div>
+            <button class="btn-google" onclick="loginWithGoogle()">
+                <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                Continue with Google
+            </button>
+            <div class="auth-switch">Already have an account? <a onclick="switchAuthMode('login')">Log in</a></div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Dashboard Section ──────────────────────────────────────────────── -->
+<section class="section dashboard-section" id="dashboard">
+    <div class="section-header">
+        <h2>Your Dashboard</h2>
+        <p>Manage your API key, monitor usage, and control your subscription.</p>
+    </div>
+    <div class="dashboard-grid">
+        <!-- API Key Card -->
+        <div class="dash-card" style="grid-column: 1 / -1;">
+            <h4>API Key</h4>
+            <div class="dash-key-box">
+                <span id="dash-api-key">Loading...</span>
+                <button class="btn btn-primary btn-sm" onclick="copyDashKey()">Copy</button>
+                <button class="btn btn-outline btn-sm" onclick="regenerateKey()">Regenerate</button>
+            </div>
+            <p class="dash-sub" id="dash-key-warning" style="display:none;color:#dc2626;">New key generated. Your old key is now invalid. Save this key securely!</p>
+        </div>
+        <!-- Usage Card -->
+        <div class="dash-card">
+            <h4>Monthly Usage</h4>
+            <div class="dash-value" id="dash-used">-</div>
+            <div class="dash-sub" id="dash-usage-text">of - requests</div>
+            <div class="usage-bar">
+                <div class="usage-bar-fill" id="dash-usage-bar" style="width:0%"></div>
+            </div>
+            <div class="dash-sub" id="dash-reset">Resets on -</div>
+        </div>
+        <!-- Plan Card -->
+        <div class="dash-card">
+            <h4>Current Plan</h4>
+            <div style="margin-bottom:.8rem;">
+                <span class="plan-badge plan-free" id="dash-plan-badge">FREE</span>
+            </div>
+            <div class="dash-sub" id="dash-plan-details">50 requests/month</div>
+            <div class="dash-actions">
+                <a href="#pricing" class="btn btn-primary btn-sm" id="dash-upgrade-btn">Upgrade</a>
+                <button class="btn btn-outline btn-sm" id="dash-manage-btn" onclick="manageDashSubscription()" style="display:none;">Manage Subscription</button>
+            </div>
+        </div>
+        <!-- Account Card -->
+        <div class="dash-card">
+            <h4>Account</h4>
+            <div style="font-size:.95rem;font-weight:600;" id="dash-email">-</div>
+            <div class="dash-sub" id="dash-created">Member since -</div>
+        </div>
     </div>
 </section>
 
@@ -452,7 +605,7 @@
                 <li>Email support</li>
                 <li>No watermark</li>
             </ul>
-            <a href="https://buy.stripe.com/6oUeVe5CE9h61i0cGY8bS02" class="btn btn-outline">Subscribe</a>
+            <button class="btn btn-outline" onclick="subscribePlan('starter','https://buy.stripe.com/6oUeVe5CE9h61i0cGY8bS02')">Subscribe</button>
         </div>
         <div class="pricing-card popular">
             <div class="popular-badge">Most Popular</div>
@@ -465,7 +618,7 @@
                 <li>No watermark</li>
                 <li>Priority support</li>
             </ul>
-            <a href="https://buy.stripe.com/14A3cw5CEbpe8Ks4as8bS04" class="btn btn-primary">Subscribe</a>
+            <button class="btn btn-primary" onclick="subscribePlan('pro','https://buy.stripe.com/14A3cw5CEbpe8Ks4as8bS04')">Subscribe</button>
         </div>
         <div class="pricing-card">
             <h3>Business</h3>
@@ -478,7 +631,7 @@
                 <li>SLA guarantee</li>
                 <li>Dedicated support</li>
             </ul>
-            <a href="https://buy.stripe.com/28E6oI9SUgJy0dW6iA8bS05" class="btn btn-outline">Subscribe</a>
+            <button class="btn btn-outline" onclick="subscribePlan('business','https://buy.stripe.com/28E6oI9SUgJy0dW6iA8bS05')">Subscribe</button>
         </div>
     </div>
     <div style="text-align:center;margin-top:2rem;">
@@ -1053,6 +1206,284 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     }
+});
+
+// ── Firebase Auth ─────────────────────────────────────────────────────────
+const firebaseConfig = {
+    apiKey: "AIzaSyDp5Ctt6lR3DuGr9SIkfXVFS_u4X3JKYs8",
+    authDomain: "editpdfree.firebaseapp.com",
+    projectId: "editpdfree",
+    storageBucket: "editpdfree.firebasestorage.app",
+    messagingSenderId: "773540567759",
+    appId: "1:773540567759:web:d5ca7401020c845c41f5ba"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+let currentUser = null;
+
+// Auth state listener
+auth.onAuthStateChanged(async function(user) {
+    currentUser = user;
+    if (user) {
+        document.getElementById('auth-buttons').style.display = 'none';
+        document.getElementById('user-menu').style.display = 'flex';
+        const initial = (user.email || 'U')[0].toUpperCase();
+        document.getElementById('user-avatar').textContent = initial;
+        closeAuthModal();
+        // Register with backend + load dashboard
+        await registerAndLoadDashboard();
+        // Redirect to Stripe if there was a pending subscribe
+        if (window._pendingSubscribe) {
+            const url = window._pendingSubscribe;
+            window._pendingSubscribe = null;
+            const sep = url.includes('?') ? '&' : '?';
+            window.location.href = url + sep + 'prefilled_email=' + encodeURIComponent(user.email);
+            return;
+        }
+    } else {
+        document.getElementById('auth-buttons').style.display = 'flex';
+        document.getElementById('user-menu').style.display = 'none';
+        document.getElementById('dashboard').classList.remove('active');
+    }
+});
+
+function showAuthModal(mode) {
+    document.getElementById('auth-modal').classList.add('active');
+    switchAuthMode(mode || 'login');
+}
+
+function closeAuthModal() {
+    document.getElementById('auth-modal').classList.remove('active');
+    document.getElementById('auth-error').style.display = 'none';
+    document.getElementById('auth-signup-error').style.display = 'none';
+}
+
+function switchAuthMode(mode) {
+    if (mode === 'signup') {
+        document.getElementById('auth-login-form').style.display = 'none';
+        document.getElementById('auth-signup-form').style.display = 'block';
+    } else {
+        document.getElementById('auth-login-form').style.display = 'block';
+        document.getElementById('auth-signup-form').style.display = 'none';
+    }
+}
+
+async function loginWithEmail() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const errorEl = document.getElementById('auth-error');
+    errorEl.style.display = 'none';
+
+    if (!email || !password) {
+        errorEl.textContent = 'Please fill in all fields.';
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    try {
+        await auth.signInWithEmailAndPassword(email, password);
+    } catch (e) {
+        errorEl.textContent = e.message.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim();
+        errorEl.style.display = 'block';
+    }
+}
+
+async function signupWithEmail() {
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const errorEl = document.getElementById('auth-signup-error');
+    errorEl.style.display = 'none';
+
+    if (!email || !password) {
+        errorEl.textContent = 'Please fill in all fields.';
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    try {
+        await auth.createUserWithEmailAndPassword(email, password);
+    } catch (e) {
+        errorEl.textContent = e.message.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim();
+        errorEl.style.display = 'block';
+    }
+}
+
+async function loginWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try {
+        await auth.signInWithPopup(provider);
+    } catch (e) {
+        const errorEl = document.getElementById('auth-error');
+        errorEl.textContent = e.message.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim();
+        errorEl.style.display = 'block';
+    }
+}
+
+function logoutUser() {
+    auth.signOut();
+}
+
+function scrollToDashboard() {
+    document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── Dashboard Logic ───────────────────────────────────────────────────────
+async function getAuthHeader() {
+    if (!currentUser) return {};
+    const token = await currentUser.getIdToken();
+    return { 'Authorization': 'Bearer ' + token };
+}
+
+async function registerAndLoadDashboard() {
+    try {
+        const headers = await getAuthHeader();
+        // Register (will do nothing if already registered)
+        const regResp = await fetch('/api/v1/auth/register', {
+            method: 'POST',
+            headers: headers
+        });
+        const regData = await regResp.json();
+
+        // If a new key was returned, show it
+        if (regData.api_key) {
+            document.getElementById('dash-api-key').textContent = regData.api_key;
+            document.getElementById('dash-key-warning').style.display = 'block';
+            document.getElementById('dash-key-warning').textContent = 'This is your new API key. Save it securely - it won\'t be shown again!';
+        }
+
+        // Load full dashboard data
+        await loadDashboard();
+
+        // Show dashboard section
+        document.getElementById('dashboard').classList.add('active');
+    } catch (e) {
+        console.error('Dashboard error:', e);
+    }
+}
+
+async function loadDashboard() {
+    try {
+        const headers = await getAuthHeader();
+        const resp = await fetch('/api/v1/auth/dashboard', { headers });
+        if (!resp.ok) return;
+        const data = await resp.json();
+
+        // API Key (show prefix only if no full key displayed)
+        const keyEl = document.getElementById('dash-api-key');
+        if (!keyEl.textContent.startsWith('epf_') || keyEl.textContent.length < 20) {
+            keyEl.textContent = data.api_key_prefix + '...' + '****';
+        }
+
+        // Usage
+        document.getElementById('dash-used').textContent = data.used;
+        document.getElementById('dash-usage-text').textContent = `of ${data.limit} requests`;
+        const pct = Math.min(100, (data.used / data.limit) * 100);
+        const bar = document.getElementById('dash-usage-bar');
+        bar.style.width = pct + '%';
+        bar.className = 'usage-bar-fill' + (pct > 90 ? ' danger' : pct > 70 ? ' warning' : '');
+        document.getElementById('dash-reset').textContent = 'Resets on ' + data.reset_date;
+
+        // Plan
+        const planBadge = document.getElementById('dash-plan-badge');
+        planBadge.textContent = data.plan.toUpperCase();
+        planBadge.className = 'plan-badge plan-' + data.plan;
+        document.getElementById('dash-plan-details').textContent = data.limit + ' requests/month' + (data.watermark ? ' (watermark)' : '');
+
+        // Show/hide upgrade vs manage
+        if (data.plan === 'free') {
+            document.getElementById('dash-upgrade-btn').style.display = '';
+            document.getElementById('dash-manage-btn').style.display = 'none';
+        } else {
+            document.getElementById('dash-upgrade-btn').style.display = 'none';
+            document.getElementById('dash-manage-btn').style.display = '';
+        }
+
+        // Account
+        document.getElementById('dash-email').textContent = data.email || currentUser.email || '-';
+        document.getElementById('dash-created').textContent = 'Member since ' + new Date(data.created_at).toLocaleDateString();
+    } catch (e) {
+        console.error('Load dashboard error:', e);
+    }
+}
+
+function copyDashKey() {
+    const keyText = document.getElementById('dash-api-key').textContent;
+    navigator.clipboard.writeText(keyText).then(() => {
+        const btn = event.target;
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+}
+
+async function regenerateKey() {
+    if (!confirm('Are you sure? Your current API key will be permanently invalidated.')) return;
+
+    try {
+        const headers = await getAuthHeader();
+        headers['Content-Type'] = 'application/json';
+        const resp = await fetch('/api/v1/auth/regenerate-key', {
+            method: 'POST',
+            headers: headers
+        });
+        if (!resp.ok) {
+            const err = await resp.json();
+            alert('Error: ' + (err.detail || 'Failed to regenerate key'));
+            return;
+        }
+        const data = await resp.json();
+        document.getElementById('dash-api-key').textContent = data.api_key;
+        document.getElementById('dash-key-warning').style.display = 'block';
+        document.getElementById('dash-key-warning').textContent = 'New key generated. Your old key is now invalid. Save this key securely!';
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+async function manageDashSubscription() {
+    try {
+        const email = currentUser.email;
+        const resp = await fetch('/api/v1/manage-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        if (!resp.ok) {
+            const err = await resp.json();
+            alert(err.detail || 'No subscription found');
+            return;
+        }
+        const data = await resp.json();
+        window.location.href = data.url;
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+// ── Subscribe (requires login) ────────────────────────────────────────────
+function subscribePlan(plan, stripeUrl) {
+    if (!currentUser) {
+        showAuthModal('login');
+        // Store intent to redirect after login
+        window._pendingSubscribe = stripeUrl;
+        return;
+    }
+    // Append prefilled email to Stripe URL
+    const email = currentUser.email;
+    const separator = stripeUrl.includes('?') ? '&' : '?';
+    window.location.href = stripeUrl + separator + 'prefilled_email=' + encodeURIComponent(email);
+}
+
+// Enter key support for auth forms
+document.addEventListener('DOMContentLoaded', function() {
+    ['auth-password'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('keypress', function(e) { if (e.key === 'Enter') loginWithEmail(); });
+    });
+    ['signup-password'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('keypress', function(e) { if (e.key === 'Enter') signupWithEmail(); });
+    });
 });
 </script>
 </body>

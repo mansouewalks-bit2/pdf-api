@@ -2,7 +2,10 @@
 
 import os
 import io
+import json
 import stripe
+import firebase_admin
+from firebase_admin import credentials, auth as firebase_auth
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, UploadFile, File, Form, HTTPException, Query
 from fastapi.responses import Response, FileResponse, JSONResponse
@@ -10,6 +13,23 @@ from fastapi.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "")
+
+# Initialize Firebase Admin SDK
+if not firebase_admin._apps:
+    firebase_cred_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
+    firebase_cred_path = os.getenv("FIREBASE_CREDENTIALS", "firebase-credentials.json")
+    if firebase_cred_json:
+        # Railway/cloud: credentials from env variable (JSON string)
+        cred = credentials.Certificate(json.loads(firebase_cred_json))
+        firebase_admin.initialize_app(cred)
+    elif os.path.exists(firebase_cred_path):
+        # Local: credentials from file
+        cred = credentials.Certificate(firebase_cred_path)
+        firebase_admin.initialize_app(cred)
+    else:
+        firebase_admin.initialize_app(options={
+            "projectId": os.getenv("FIREBASE_PROJECT_ID", "editpdfree")
+        })
 
 from models import (
     HtmlToPdfRequest,
@@ -19,7 +39,7 @@ from models import (
     UsageResponse,
     PLAN_LIMITS,
 )
-from database import init_db, get_usage_count, generate_api_key, hash_key
+from database import init_db, get_usage_count, generate_api_key, hash_key, get_key_by_uid, update_plan_by_email, link_uid_by_email, regenerate_api_key
 from auth import APIKeyMiddleware
 from rate_limiter import RateLimitMiddleware, get_reset_date
 from pdf_engine import (
@@ -270,6 +290,90 @@ async def api_protect_pdf(
         raise HTTPException(status_code=500, detail=f"Protection failed: {str(e)}")
 
 
+# ─── Firebase Auth Helpers ──────────────────────────────────────────────────
+
+async def verify_firebase_token(request: Request) -> dict:
+    """Extract and verify Firebase ID token from Authorization header."""
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    id_token = auth_header[7:]
+    try:
+        decoded = firebase_auth.verify_id_token(id_token)
+        return decoded
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid Firebase token")
+
+
+# ─── Auth Endpoints ────────────────────────────────────────────────────────
+
+@app.post("/api/v1/auth/register")
+async def auth_register(request: Request):
+    """Register/login: create or retrieve API key for Firebase user."""
+    user = await verify_firebase_token(request)
+    uid = user["uid"]
+    email = user.get("email")
+
+    # Check if user already has a key
+    existing = await get_key_by_uid(uid)
+    if existing:
+        return {"message": "Account already registered", "plan": existing["plan"]}
+
+    # Check if there's an existing key by email (from Stripe) and link it
+    if email:
+        await link_uid_by_email(email, uid)
+        linked = await get_key_by_uid(uid)
+        if linked:
+            return {"message": "Account linked to existing subscription", "plan": linked["plan"]}
+
+    # Create new free key
+    api_key = await generate_api_key(plan="free", email=email, firebase_uid=uid)
+    return {"message": "Account created", "api_key": api_key, "plan": "free"}
+
+
+@app.get("/api/v1/auth/dashboard")
+async def auth_dashboard(request: Request):
+    """Get dashboard data for authenticated user."""
+    user = await verify_firebase_token(request)
+    uid = user["uid"]
+
+    key_info = await get_key_by_uid(uid)
+    if not key_info:
+        raise HTTPException(status_code=404, detail="No API key found. Please register first.")
+
+    # Get usage
+    used = await get_usage_count(key_info["key_hash"], None)
+    plan_config = PLAN_LIMITS[key_info["plan"]]
+
+    return {
+        "api_key_prefix": key_info["key_prefix"],
+        "plan": key_info["plan"],
+        "email": key_info["email"],
+        "used": used,
+        "limit": plan_config["monthly_limit"],
+        "remaining": max(0, plan_config["monthly_limit"] - used),
+        "reset_date": get_reset_date(),
+        "created_at": key_info["created_at"],
+        "watermark": plan_config["watermark"],
+    }
+
+
+@app.post("/api/v1/auth/regenerate-key")
+async def auth_regenerate_key(request: Request):
+    """Regenerate API key for authenticated user."""
+    user = await verify_firebase_token(request)
+    uid = user["uid"]
+
+    new_key = await regenerate_api_key(uid)
+    if not new_key:
+        raise HTTPException(status_code=404, detail="No API key found. Please register first.")
+
+    return {
+        "api_key": new_key,
+        "message": "API key regenerated. Your old key is now invalid.",
+    }
+
+
 # ─── Usage & Key Management ────────────────────────────────────────────────────
 
 @app.get("/api/v1/usage", response_model=UsageResponse)
@@ -369,11 +473,34 @@ async def stripe_webhook(request: Request):
             price_id = line_items.data[0].price.id
             plan = STRIPE_PRICE_TO_PLAN.get(price_id, "starter")
 
-            # Generate API key for the customer
-            api_key = await generate_api_key(plan=plan, email=customer_email)
+            if customer_email:
+                # Try to upgrade existing key (linked via Firebase)
+                await update_plan_by_email(customer_email, plan)
+                print(f"[STRIPE] Upgraded {customer_email} to {plan}")
 
-            # TODO: Send email with API key (for now, logged)
-            print(f"[STRIPE] New {plan} subscription: {customer_email} -> key prefix: {api_key[:12]}...")
+                # Check if user already has a key
+                from database import get_db
+                async with (await get_db()) as db:
+                    cursor = await db.execute(
+                        "SELECT id FROM api_keys WHERE email = ? AND active = 1", (customer_email,)
+                    )
+                    existing = await cursor.fetchone()
+
+                if not existing:
+                    # No existing key - generate new one
+                    api_key = await generate_api_key(plan=plan, email=customer_email)
+                    print(f"[STRIPE] New {plan} key for {customer_email}: {api_key[:12]}...")
+
+    elif event["type"] == "customer.subscription.deleted":
+        # Subscription cancelled - downgrade to free
+        subscription = event["data"]["object"]
+        customer_id = subscription.get("customer")
+        if customer_id:
+            customer = stripe.Customer.retrieve(customer_id)
+            customer_email = customer.get("email")
+            if customer_email:
+                await update_plan_by_email(customer_email, "free")
+                print(f"[STRIPE] Downgraded {customer_email} to free (subscription cancelled)")
 
     return {"status": "ok"}
 
