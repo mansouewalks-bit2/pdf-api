@@ -2,11 +2,14 @@
 
 import os
 import io
+import stripe
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, UploadFile, File, Form, HTTPException, Query
 from fastapi.responses import Response, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
+
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "")
 
 from models import (
     HtmlToPdfRequest,
@@ -302,6 +305,52 @@ async def api_generate_key(
         "monthly_limit": PLAN_LIMITS[plan]["monthly_limit"],
         "message": "Save this key securely. It cannot be retrieved again.",
     }
+
+
+# ─── Stripe Webhook ──────────────────────────────────────────────────────────────
+
+STRIPE_PRICE_TO_PLAN = {
+    "price_1T1gglJW4PGBAbQ7Ftp5pcxA": "starter",
+    "price_1T1ggvJW4PGBAbQ7BqWrSsiX": "pro",
+    "price_1T1ggwJW4PGBAbQ7B1JyhAW1": "business",
+}
+
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+
+
+@app.post("/stripe/webhook")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhook events."""
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature", "")
+
+    try:
+        if STRIPE_WEBHOOK_SECRET:
+            event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
+        else:
+            event = stripe.Event.construct_from(
+                stripe.util.json.loads(payload), stripe.api_key
+            )
+    except (ValueError, stripe.error.SignatureVerificationError):
+        raise HTTPException(status_code=400, detail="Invalid webhook signature")
+
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        customer_email = session.get("customer_details", {}).get("email")
+
+        # Get the price ID from line items
+        line_items = stripe.checkout.Session.list_line_items(session["id"], limit=1)
+        if line_items and line_items.data:
+            price_id = line_items.data[0].price.id
+            plan = STRIPE_PRICE_TO_PLAN.get(price_id, "starter")
+
+            # Generate API key for the customer
+            api_key = await generate_api_key(plan=plan, email=customer_email)
+
+            # TODO: Send email with API key (for now, logged)
+            print(f"[STRIPE] New {plan} subscription: {customer_email} -> key prefix: {api_key[:12]}...")
+
+    return {"status": "ok"}
 
 
 # ─── Run ────────────────────────────────────────────────────────────────────────
