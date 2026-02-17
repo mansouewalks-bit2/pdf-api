@@ -53,6 +53,7 @@
         .nav-links { display: flex; gap: 1.5rem; align-items: center; }
         .nav-links a { color: var(--text-muted); text-decoration: none; font-size: .9rem; font-weight: 500; transition: color .2s; }
         .nav-links a:hover { color: var(--primary); }
+        a[href^="mailto:"] { text-decoration: none; }
         .btn {
             display: inline-flex; align-items: center; gap: .5rem;
             padding: .6rem 1.4rem; border-radius: 8px; font-weight: 600;
@@ -149,6 +150,42 @@
         .pricing-features li::before { content: "\2713"; color: var(--success); font-weight: 700; font-size: .8rem; flex-shrink: 0; }
         .pricing-card .btn { width: 100%; justify-content: center; margin-top: auto; }
 
+        /* ── Get API Key Form ─────────────────────────────── */
+        .key-form-card {
+            background: linear-gradient(135deg, var(--primary-light) 0%, #fef9c3 100%);
+            border: 2px solid var(--primary); border-radius: var(--radius); padding: 2.5rem;
+            max-width: 600px; margin: 0 auto; text-align: center; box-shadow: var(--shadow-lg);
+        }
+        .key-form-card h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: .5rem; }
+        .key-form-card p { color: var(--text-muted); margin-bottom: 1.5rem; }
+        .key-input-group { display: flex; gap: .5rem; margin-bottom: 1rem; }
+        .key-input-group input {
+            flex: 1; padding: .7rem 1rem; border: 1px solid var(--border); border-radius: 8px;
+            font-size: .95rem; font-family: inherit;
+        }
+        .key-input-group input:focus { outline: none; border-color: var(--primary); }
+        .key-result {
+            display: none; margin-top: 1.5rem; padding: 1rem; background: var(--card-bg);
+            border: 1px solid var(--border); border-radius: 8px; text-align: left;
+        }
+        .key-result-label { font-size: .8rem; font-weight: 600; color: var(--text-muted); margin-bottom: .3rem; }
+        .key-result-value {
+            font-family: 'Courier New', monospace; font-size: .9rem; padding: .6rem;
+            background: #f1f5f9; border-radius: 4px; word-break: break-all; display: flex;
+            align-items: center; justify-content: space-between; gap: .5rem;
+        }
+        .key-result-value button {
+            background: var(--primary); color: #fff; border: none; padding: .3rem .7rem;
+            border-radius: 4px; cursor: pointer; font-size: .8rem; font-weight: 600; white-space: nowrap;
+        }
+        .key-result-value button:hover { background: var(--primary-dark); }
+
+        /* ── FAQ ─────────────────────────────────────────── */
+        .faq-grid { max-width: 800px; margin: 0 auto; }
+        .faq-item { margin-bottom: 1.5rem; }
+        .faq-item h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: .4rem; color: var(--text); }
+        .faq-item p { color: var(--text-muted); font-size: .95rem; line-height: 1.6; }
+
         /* ── Code examples ────────────────────────────────── */
         .code-tabs { display: flex; gap: .5rem; margin-bottom: 0; flex-wrap: wrap; }
         .code-tab {
@@ -228,10 +265,10 @@
         <a href="/" class="nav-logo">Edit<span>PDF</span>ree <small style="font-weight:400;font-size:.75rem;color:var(--text-muted)">API</small></a>
         <div class="nav-links">
             <a href="#features">Features</a>
-            <a href="#playground">Playground</a>
+            <a href="#get-key">Get Key</a>
             <a href="#pricing" class="hide-mobile">Pricing</a>
             <a href="#docs" class="hide-mobile">Docs</a>
-            <a href="#examples">Examples</a>
+            <a href="#faq" class="hide-mobile">FAQ</a>
             <a href="https://www.editpdfree.com" target="_blank" class="btn btn-outline btn-sm">EditPDFree.com</a>
         </div>
     </div>
@@ -243,7 +280,7 @@
     <h1>PDF Processing <span>Made Simple</span></h1>
     <p>A fast, reliable API to convert, merge, compress, split, watermark and protect PDFs. Start free, scale as you grow.</p>
     <div class="hero-actions">
-        <a href="#pricing" class="btn btn-primary">Get Free API Key</a>
+        <a href="#get-key" class="btn btn-primary">Get Free API Key</a>
         <a href="#docs" class="btn btn-outline">Read the Docs</a>
     </div>
     <div class="hero-code">
@@ -254,6 +291,24 @@
   -H <span class="str">"X-API-Key: YOUR_KEY"</span> \
   -d <span class="str">'{"html": "&lt;h1&gt;Hello World&lt;/h1&gt;", "options": {"format": "A4"}}'</span> \
   -o output.pdf</pre>
+    </div>
+</section>
+
+<!-- ── Trust Indicators ─────────────────────────────────────────────────── -->
+<section style="background:#fff;padding:2rem 2rem;border-bottom:1px solid var(--border);">
+    <div style="max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:center;gap:2rem;align-items:center;text-align:center;">
+        <div style="display:flex;align-items:center;gap:.5rem;color:var(--text-muted);font-size:.9rem;font-weight:600;">
+            <span style="font-size:1.5rem;">🚀</span> Powered by Chromium
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;color:var(--text-muted);font-size:.9rem;font-weight:600;">
+            <span style="font-size:1.5rem;">✓</span> 99.9% Uptime
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;color:var(--text-muted);font-size:.9rem;font-weight:600;">
+            <span style="font-size:1.5rem;">🎁</span> Free Tier Available
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;color:var(--text-muted);font-size:.9rem;font-weight:600;">
+            <span style="font-size:1.5rem;">💳</span> No Credit Card Required
+        </div>
     </div>
 </section>
 
@@ -349,6 +404,27 @@
     </div>
 </section>
 
+<!-- ── Get Free API Key ────────────────────────────────────────────────── -->
+<section class="section" id="get-key">
+    <div class="key-form-card">
+        <h3>Get Your Free API Key</h3>
+        <p>Start using the API instantly. No credit card required.</p>
+        <div class="key-input-group">
+            <input type="email" id="key-email" placeholder="your@email.com" required>
+            <button class="btn btn-primary" onclick="generateFreeKey()">Get Free Key</button>
+        </div>
+        <div class="key-result" id="key-result">
+            <div class="key-result-label">Your API Key</div>
+            <div class="key-result-value">
+                <span id="key-value"></span>
+                <button onclick="copyApiKey()">Copy</button>
+            </div>
+            <p style="font-size:.85rem;color:var(--text-muted);margin-top:.8rem;">Save this key securely. You can start using it immediately with 50 free conversions per month.</p>
+        </div>
+        <div id="key-error" style="display:none;margin-top:1rem;padding:.7rem;background:#fee2e2;color:#dc2626;border-radius:6px;font-size:.85rem;"></div>
+    </div>
+</section>
+
 <!-- ── Pricing ──────────────────────────────────────────────────────────── -->
 <section class="section" id="pricing">
     <div class="section-header">
@@ -365,7 +441,7 @@
                 <li>Community support</li>
                 <li>Small watermark on output</li>
             </ul>
-            <a href="#playground" class="btn btn-outline">Start Free</a>
+            <a href="#get-key" class="btn btn-outline">Get Free Key</a>
         </div>
         <div class="pricing-card">
             <h3>Starter</h3>
@@ -376,7 +452,7 @@
                 <li>Email support</li>
                 <li>No watermark</li>
             </ul>
-            <a href="https://www.editpdfree.com/api/subscribe?plan=starter" class="btn btn-outline">Get Started</a>
+            <a href="mailto:contact@editpdfree.com?subject=Starter Plan" class="btn btn-outline">Contact Us</a>
         </div>
         <div class="pricing-card popular">
             <div class="popular-badge">Most Popular</div>
@@ -389,7 +465,7 @@
                 <li>No watermark</li>
                 <li>Priority support</li>
             </ul>
-            <a href="https://www.editpdfree.com/api/subscribe?plan=pro" class="btn btn-primary">Get Started</a>
+            <a href="mailto:contact@editpdfree.com?subject=Pro Plan" class="btn btn-primary">Contact Us</a>
         </div>
         <div class="pricing-card">
             <h3>Business</h3>
@@ -402,7 +478,7 @@
                 <li>SLA guarantee</li>
                 <li>Dedicated support</li>
             </ul>
-            <a href="https://www.editpdfree.com/api/subscribe?plan=business" class="btn btn-outline">Contact Sales</a>
+            <a href="mailto:contact@editpdfree.com?subject=Business Plan" class="btn btn-outline">Contact Us</a>
         </div>
     </div>
 </section>
@@ -747,6 +823,38 @@ puts "Used: #{usage['used']}/#{usage['monthly_limit']}"</pre>
     </div>
 </section>
 
+<!-- ── FAQ ──────────────────────────────────────────────────────────────── -->
+<section class="section" id="faq" style="background:#f8fafc;max-width:100%;padding-left:2rem;padding-right:2rem;">
+    <div style="max-width:1200px;margin:0 auto;">
+    <div class="section-header">
+        <h2>Frequently Asked Questions</h2>
+        <p>Everything you need to know about the EditPDFree API.</p>
+    </div>
+    <div class="faq-grid">
+        <div class="faq-item">
+            <h3>What is EditPDFree API?</h3>
+            <p>EditPDFree API is a RESTful API that provides powerful PDF processing capabilities for developers. It allows you to convert HTML and URLs to PDF, merge, compress, split, watermark, and password-protect PDF files through simple HTTP requests. The API is built on Chromium for pixel-perfect rendering and supports all modern web standards.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is there a free tier?</h3>
+            <p>Yes! The free tier includes 50 conversions per month with access to all 7 endpoints. No credit card is required to get started. Simply enter your email above to get your free API key instantly. Free tier outputs include a small watermark, which is removed on paid plans.</p>
+        </div>
+        <div class="faq-item">
+            <h3>What formats are supported?</h3>
+            <p>The API accepts HTML strings, public URLs, and PDF files as input. Output is always PDF (or ZIP for split operations). For HTML to PDF conversion, you can customize page size (A4, Letter, A3, etc.), margins, orientation, headers, footers, and more. All modern HTML5 and CSS3 features are supported.</p>
+        </div>
+        <div class="faq-item">
+            <h3>How do I authenticate?</h3>
+            <p>Authentication is done via the <code>X-API-Key</code> header in your HTTP requests. After getting your API key, simply include it in every request: <code>-H "X-API-Key: YOUR_KEY"</code>. Your key is tied to your account and should be kept secure. Never expose it in client-side code.</p>
+        </div>
+        <div class="faq-item">
+            <h3>What happens if I exceed my limit?</h3>
+            <p>If you exceed your monthly limit, the API will return a 429 (Too Many Requests) error with rate limit headers. You can upgrade to a higher plan anytime by contacting us. Limits reset on the 1st of each month. You can check your current usage at any time using the <code>/api/v1/usage</code> endpoint.</p>
+        </div>
+    </div>
+    </div>
+</section>
+
 <!-- ── Footer ──────────────────────────────────────────────────────────── -->
 <footer>
     <p style="margin-bottom:.5rem;font-size:1rem;">Powered by <a href="https://www.editpdfree.com" target="_blank"><strong>EditPDFree.com</strong></a></p>
@@ -845,6 +953,61 @@ function copyHero() {
         setTimeout(() => btn.textContent = "Copy", 2000);
     });
 }
+
+// ── Get Free API Key ──────────────────────────────────────────────────────
+async function generateFreeKey() {
+    const email = document.getElementById("key-email").value.trim();
+    const result = document.getElementById("key-result");
+    const error = document.getElementById("key-error");
+
+    error.style.display = "none";
+    result.style.display = "none";
+
+    if (!email || !email.includes("@")) {
+        error.textContent = "Please enter a valid email address.";
+        error.style.display = "block";
+        return;
+    }
+
+    try {
+        const resp = await fetch(`/api/v1/generate-key?plan=free&email=${encodeURIComponent(email)}`, {
+            method: "POST"
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json();
+            throw new Error(err.detail || `HTTP ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        document.getElementById("key-value").textContent = data.api_key;
+        result.style.display = "block";
+    } catch (e) {
+        error.textContent = `Error: ${e.message}`;
+        error.style.display = "block";
+    }
+}
+
+function copyApiKey() {
+    const keyValue = document.getElementById("key-value").textContent;
+    navigator.clipboard.writeText(keyValue).then(() => {
+        const btn = event.target;
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = "Copy", 2000);
+    });
+}
+
+// Allow Enter key to submit
+document.addEventListener("DOMContentLoaded", function() {
+    const emailInput = document.getElementById("key-email");
+    if (emailInput) {
+        emailInput.addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                generateFreeKey();
+            }
+        });
+    }
+});
 </script>
 </body>
 </html>
