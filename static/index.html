@@ -1211,7 +1211,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 // ── Firebase Auth ─────────────────────────────────────────────────────────
-const firebaseConfig = {
+var firebaseConfig = {
     apiKey: "AIzaSyDp5Ctt6lR3DuGr9SIkfXVFS_u4X3JKYs8",
     authDomain: "editpdfree.firebaseapp.com",
     projectId: "editpdfree",
@@ -1219,10 +1219,10 @@ const firebaseConfig = {
     messagingSenderId: "773540567759",
     appId: "1:773540567759:web:d5ca7401020c845c41f5ba"
 };
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
+var firebaseApp = firebase.initializeApp(firebaseConfig);
+var auth = firebase.auth();
 
-let currentUser = null;
+var currentUser = null;
 
 // Auth state listener
 auth.onAuthStateChanged(async function(user) {
