@@ -302,11 +302,93 @@
 
         /* ── Responsive ───────────────────────────────────── */
         @media (max-width: 768px) {
-            .hero h1 { font-size: 2rem; }
-            .playground-row { grid-template-columns: 1fr; }
-            .pricing-card.popular { transform: none; }
-            .nav-links { gap: .8rem; }
+            /* Nav */
+            .nav-inner { flex-wrap: wrap; height: auto; padding: .8rem 0; gap: .5rem; }
+            .nav-logo { font-size: 1.1rem; }
+            .nav-links { gap: .5rem; flex-wrap: wrap; justify-content: center; width: 100%; }
             .nav-links a.hide-mobile { display: none; }
+            .nav-links a { font-size: .8rem; }
+            .nav-links .btn-sm { padding: .3rem .7rem; font-size: .8rem; }
+            .auth-buttons { gap: .3rem; }
+            .btn-login, .btn-signup { padding: .3rem .7rem; font-size: .8rem; }
+            .user-menu { gap: .4rem; }
+            .user-email { max-width: 100px; font-size: .75rem; }
+            .btn-dashboard-link { font-size: .8rem; }
+            .btn-logout { padding: .2rem .5rem; font-size: .75rem; }
+
+            /* Hero */
+            .hero { padding: 3rem 1rem 2.5rem; }
+            .hero h1 { font-size: 1.8rem; }
+            .hero p { font-size: 1rem; }
+            .hero-actions { flex-direction: column; align-items: center; }
+            .hero-code { margin: 2rem auto 0; }
+            .hero-code pre { font-size: .7rem; }
+
+            /* Sections */
+            .section { padding: 3rem 1rem; }
+            .section-header h2 { font-size: 1.6rem; }
+            .section-header p { font-size: .9rem; }
+
+            /* Features */
+            .features-grid { grid-template-columns: 1fr; gap: 1rem; }
+
+            /* Playground */
+            .playground-row { grid-template-columns: 1fr; }
+            .playground { padding: 1.2rem; }
+
+            /* Pricing */
+            .pricing-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .pricing-card.popular { transform: none; }
+            .pricing-card { padding: 1.5rem; }
+            .pricing-price { font-size: 2rem; }
+
+            /* Get Key */
+            .key-form-card { padding: 1.5rem; }
+            .key-form-card h3 { font-size: 1.2rem; }
+            .key-input-group { flex-direction: column; }
+            .key-input-group .btn { width: 100%; justify-content: center; }
+
+            /* Dashboard */
+            .dashboard-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .dash-card { padding: 1.2rem; }
+            .dash-key-box { flex-direction: column; align-items: stretch; gap: .5rem; font-size: .8rem; }
+            .dash-key-box button { width: 100%; justify-content: center; }
+            .dash-actions { flex-direction: column; }
+            .dash-actions .btn { width: 100%; justify-content: center; }
+            .dash-value { font-size: 1.5rem; }
+
+            /* Code examples */
+            .code-tabs { gap: .3rem; }
+            .code-tab { padding: .4rem .7rem; font-size: .75rem; }
+            .code-panel { padding: 1rem; }
+            .code-panel pre { font-size: .7rem; }
+
+            /* Docs */
+            .endpoint-card { padding: 1rem; }
+            .endpoint-params table { font-size: .75rem; }
+            .endpoint-params th, .endpoint-params td { padding: .3rem .4rem; }
+            .endpoint-path { font-size: .85rem; }
+
+            /* Auth modal */
+            .auth-modal-content { padding: 1.5rem; margin: 1rem; }
+            .auth-modal-content h3 { font-size: 1.1rem; }
+
+            /* FAQ */
+            .faq-item h3 { font-size: .95rem; }
+            .faq-item p { font-size: .85rem; }
+
+            /* Footer */
+            footer { padding: 2rem 1rem; }
+        }
+
+        @media (max-width: 480px) {
+            nav { padding: 0 1rem; }
+            .hero h1 { font-size: 1.5rem; }
+            .hero-code pre { font-size: .65rem; }
+            .section-header h2 { font-size: 1.3rem; }
+            .pricing-price { font-size: 1.8rem; }
+            .endpoint-params { overflow-x: auto; }
+            .endpoint-params table { min-width: 400px; }
         }
     </style>
 </head>
